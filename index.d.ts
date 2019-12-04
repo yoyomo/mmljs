@@ -14,6 +14,7 @@ export declare const A_BASE_KEY_INDEX = 48;
 export declare const A_BASE_FREQUENCY = 440;
 export declare const QUARTER_NOTE = 4;
 export declare const BASE_OCTAVE = 4;
+export declare type NoteLetters = 'a' | 'b' | 'c' | 'd' | 'e' | 'f' | 'g';
 export interface Note {
     type: 'note';
     index: number;
@@ -91,14 +92,14 @@ export declare module MML {
     const getDurationFromExtensions: (note: TimedSequenceNote) => number;
     const convertDurationToSeconds: (note: TimedSequenceNote, tempo: number) => number;
     const playNote: (note: Note, tempo: number, scheduledStartTime: number) => OscillatorNode[];
-    const getHeaderNotesInQueue: () => SequenceNote[];
+    const getHeaderNotesInQueue: () => void | SequenceNote[];
     const getNotesInQueue: () => SequenceNote[][];
     class Sequence {
         tempo: number;
         octave: number;
         extensions: number[];
         defaultExtensions: number[];
-        chordNoteIndexes: any[];
+        chordNoteIndexes: number[];
         readingChord: boolean;
         mmlIndex: number;
         mml: string;
@@ -113,7 +114,7 @@ export declare module MML {
         isNextValid: (reg: RegExp) => boolean;
         getOctaveOffset: () => number;
         static calculateDurationFromNewExtension: (duration: number, extension: number) => number;
-        readNextLength: () => any[];
+        readNextLength: () => number[];
         getDuration: () => void;
         saveNote: (noteIndex: number) => void;
         nextNote: () => void;

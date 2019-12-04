@@ -1,36 +1,25 @@
-var __assign = (this && this.__assign) || function () {
-    __assign = Object.assign || function(t) {
-        for (var s, i = 1, n = arguments.length; i < n; i++) {
-            s = arguments[i];
-            for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p))
-                t[p] = s[p];
-        }
-        return t;
-    };
-    return __assign.apply(this, arguments);
-};
-export var C_BASE_KEY_INDEX = 39; // 0...n
-export var C_BASE_NOTE_INDEXES = { c: 0, d: 2, e: 4, f: 5, g: 7, a: 9, b: 11 };
-export var SCALE = 12;
-export var TOTAL_NUM_OF_KEYS = 88;
-export var A_BASE_KEY_INDEX = 48; // 0...n
-export var A_BASE_FREQUENCY = 440;
-export var QUARTER_NOTE = 4;
-export var BASE_OCTAVE = 4;
+export const C_BASE_KEY_INDEX = 39; // 0...n
+export const C_BASE_NOTE_INDEXES = { c: 0, d: 2, e: 4, f: 5, g: 7, a: 9, b: 11 };
+export const SCALE = 12;
+export const TOTAL_NUM_OF_KEYS = 88;
+export const A_BASE_KEY_INDEX = 48; // 0...n
+export const A_BASE_FREQUENCY = 440;
+export const QUARTER_NOTE = 4;
+export const BASE_OCTAVE = 4;
 export var MML;
 (function (MML) {
-    var notes;
-    var audioContext;
-    var gain;
-    var filter;
-    var scheduleTime = 0.1;
-    var lookahead = 25;
-    var startTime = 0;
-    var sequences = [];
-    var playInterval;
-    var header;
-    MML.initialize = function () {
-        var AudioContext = window['AudioContext'] // Default
+    let notes;
+    let audioContext;
+    let gain;
+    let filter;
+    let scheduleTime = 0.1;
+    let lookahead = 25;
+    let startTime = 0;
+    let sequences = [];
+    let playInterval;
+    let header;
+    MML.initialize = () => {
+        const AudioContext = window['AudioContext'] // Default
             || window['webkitAudioContext'] // Safari and old versions of Chrome
             || window['mozAudioContext']
             || window['oAudioContext']
@@ -46,30 +35,30 @@ export var MML;
         gain.connect(audioContext.destination);
         calculateNotes();
     };
-    var calculateNotes = function () {
+    let calculateNotes = () => {
         notes = [];
-        var keys = ['a', 'a+', 'b', 'c', 'c+', 'd', 'd+', 'e', 'f', 'f+', 'g', 'g+'];
-        var newOctaveIndex = 3;
-        var octave = 0;
-        var keyIndex = 0;
-        for (var n = 0; n < TOTAL_NUM_OF_KEYS; n++) {
-            var frequency = Math.pow(2, ((n - A_BASE_KEY_INDEX) / SCALE)) * A_BASE_FREQUENCY;
-            var key = keys[keyIndex];
-            var nextKey = (keyIndex + 1) % keys.length;
+        const keys = ['a', 'a+', 'b', 'c', 'c+', 'd', 'd+', 'e', 'f', 'f+', 'g', 'g+'];
+        const newOctaveIndex = 3;
+        let octave = 0;
+        let keyIndex = 0;
+        for (let n = 0; n < TOTAL_NUM_OF_KEYS; n++) {
+            let frequency = Math.pow(2, ((n - A_BASE_KEY_INDEX) / SCALE)) * A_BASE_FREQUENCY;
+            let key = keys[keyIndex];
+            let nextKey = (keyIndex + 1) % keys.length;
             octave = octave + (keyIndex === newOctaveIndex ? 1 : 0);
-            var alt = key.slice(-1) === "#" ? keys[nextKey][0] + '-' : '';
+            let alt = key.slice(-1) === "#" ? keys[nextKey][0] + '-' : '';
             notes.push({ index: n, key: key, octave: octave, alt: alt, frequency: frequency });
             keyIndex = nextKey;
         }
     };
-    MML.getNotes = function () {
+    MML.getNotes = () => {
         return notes;
     };
-    MML.readMML = function (mmlString) {
-        var mmls = mmlString.toLowerCase().replace(/\s/g, '').split(';');
-        var headerMML = '';
-        for (var i = mmls.length - 1; i >= 0; i--) {
-            var mml = mmls[i];
+    MML.readMML = (mmlString) => {
+        const mmls = mmlString.toLowerCase().replace(/\s/g, '').split(';');
+        let headerMML = '';
+        for (let i = mmls.length - 1; i >= 0; i--) {
+            let mml = mmls[i];
             if (mml.includes('%')) {
                 headerMML = mmls.splice(i, 1)[0];
                 break;
@@ -77,69 +66,69 @@ export var MML;
         }
         header = new Sequence(headerMML);
         header.parseMML();
-        mmls.map(function (mml) {
+        mmls.map(mml => {
             if (!mml)
                 return;
-            var sequence = new Sequence(mml);
+            let sequence = new Sequence(mml);
             sequences.push(sequence);
         });
-        sequences.map(function (sequence) {
+        sequences.map(sequence => {
             sequence.parseMML();
         });
     };
-    MML.writeToMML = function () {
-        return (header && header.writeToMML() || '').concat(sequences.map(function (sequence) {
+    MML.writeToMML = () => {
+        return (header && header.writeToMML() || '').concat(sequences.map(sequence => {
             return sequence.writeToMML();
         }).join(""));
     };
-    MML.playMML = function () {
+    MML.playMML = () => {
         if (!startTime) {
             startTime = audioContext.currentTime;
         }
-        var relativeScheduleTime = audioContext.currentTime + scheduleTime;
+        const relativeScheduleTime = audioContext.currentTime + scheduleTime;
         header && header.playMML(startTime, relativeScheduleTime);
-        sequences.map(function (sequence) {
+        sequences.map(sequence => {
             sequence.playMML(startTime, relativeScheduleTime);
         });
     };
-    MML.stop = function () {
+    MML.stop = () => {
         clearInterval(playInterval);
         gain.disconnect(audioContext.destination);
-        startTime = null;
+        startTime = -1;
         header && header.resetPlayState();
-        sequences.map(function (sequence) {
+        sequences.map(sequence => {
             sequence.resetPlayState();
         });
         MML.initialize();
     };
-    MML.play = function () {
+    MML.play = () => {
         MML.stop();
-        playInterval = setInterval(MML.playMML, lookahead);
+        playInterval = window.setInterval(MML.playMML, lookahead);
     };
-    MML.getDurationFromExtensions = function (note) {
+    MML.getDurationFromExtensions = (note) => {
         if (!note.extensions)
-            return;
-        var duration = note.extensions[0];
-        note.extensions.slice(1).map(function (extension) {
+            return -1;
+        let duration = note.extensions[0];
+        note.extensions.slice(1).map(extension => {
             duration = MML.Sequence.calculateDurationFromNewExtension(duration, extension);
         });
         return duration;
     };
     // 1bpm = 1s -> 1beat= 1/60s, 1beat = 4 defaultDuration
-    MML.convertDurationToSeconds = function (note, tempo) {
-        var duration = MML.getDurationFromExtensions(note);
+    MML.convertDurationToSeconds = (note, tempo) => {
+        let duration = MML.getDurationFromExtensions(note);
         if (duration === 0 || tempo === 0) {
             return Number.MAX_VALUE;
         }
         return (QUARTER_NOTE / duration) * 60 / tempo;
     };
-    MML.playNote = function (note, tempo, scheduledStartTime) {
+    MML.playNote = (note, tempo, scheduledStartTime) => {
         if (!scheduledStartTime)
             scheduledStartTime = audioContext.currentTime;
-        var oscillators = [];
-        var numberOfOscillators = 2;
-        for (var i = 0; i < numberOfOscillators; i++) {
-            var osc = audioContext.createOscillator();
+        let oscillators = [];
+        let numberOfOscillators = 2;
+        for (let i = 0; i < numberOfOscillators; i++) {
+            const osc = audioContext.createOscillator();
             osc.frequency.value = notes[note.index].frequency;
             switch (i % 2) {
                 case 0:
@@ -158,17 +147,16 @@ export var MML;
         }
         return oscillators;
     };
-    MML.getHeaderNotesInQueue = function () {
+    MML.getHeaderNotesInQueue = () => {
         return header && header.notesInQueue;
     };
-    MML.getNotesInQueue = function () {
-        return sequences.map(function (sequence) {
+    MML.getNotesInQueue = () => {
+        return sequences.map(sequence => {
             return sequence.notesInQueue;
         });
     };
-    var Sequence = /** @class */ (function () {
-        function Sequence(mml) {
-            var _this = this;
+    class Sequence {
+        constructor(mml) {
             this.tempo = 120;
             this.octave = BASE_OCTAVE;
             this.extensions = [QUARTER_NOTE];
@@ -179,8 +167,9 @@ export var MML;
             this.goToNext = false;
             this.isHeader = false;
             this.notesInQueue = [];
-            this.resetPlayState = function () {
-                _this.playState = {
+            this.playState = {};
+            this.resetPlayState = () => {
+                this.playState = {
                     index: 0,
                     nextNoteTime: 0,
                     chord: false,
@@ -194,83 +183,82 @@ export var MML;
                     endLoopOffset: 0,
                 };
             };
-            this.expect = function (reg) {
-                if (!reg.test(_this.mml[_this.mmlIndex])) {
+            this.expect = (reg) => {
+                if (!reg.test(this.mml[this.mmlIndex])) {
                     throw new Error('Invalid MML syntax.\n' +
-                        'Expected: ' + reg + ', Got: ' + _this.mml[_this.mmlIndex]);
+                        'Expected: ' + reg + ', Got: ' + this.mml[this.mmlIndex]);
                 }
             };
-            this.isThisValid = function (reg) {
-                return _this.goToNext = _this.mml[_this.mmlIndex] && _this.mml[_this.mmlIndex].trim() && reg.test(_this.mml[_this.mmlIndex]);
+            this.isThisValid = (reg) => {
+                return this.goToNext = !!this.mml[this.mmlIndex] && !!this.mml[this.mmlIndex].trim() && reg.test(this.mml[this.mmlIndex]);
             };
-            this.isNextValid = function (reg) {
-                _this.mmlIndex++;
-                return _this.isThisValid(reg);
+            this.isNextValid = (reg) => {
+                this.mmlIndex++;
+                return this.isThisValid(reg);
             };
-            this.getOctaveOffset = function () {
-                return (_this.octave - BASE_OCTAVE) * SCALE;
+            this.getOctaveOffset = () => {
+                return (this.octave - BASE_OCTAVE) * SCALE;
             };
-            this.readNextLength = function () {
-                var length = 0;
+            this.readNextLength = () => {
+                let length = 0;
                 do {
-                    if (_this.isThisValid(/\d/)) {
-                        length = length * 10 + parseInt(_this.mml[_this.mmlIndex]);
+                    if (this.isThisValid(/\d/)) {
+                        length = length * 10 + parseInt(this.mml[this.mmlIndex]);
                     }
-                } while (_this.isNextValid(/\d/));
-                return [].concat(length === 0 ? _this.defaultExtensions : length);
+                } while (this.isNextValid(/\d/));
+                return length !== 0 ? [length] : this.defaultExtensions;
             };
-            this.getDuration = function () {
-                var _a;
-                _this.expect(/[\dl^.~]/);
-                _this.extensions = _this.defaultExtensions;
-                var changeDefaultDuration = false;
-                while (_this.isThisValid(/[\dl^.~]/)) {
-                    switch (_this.mml[_this.mmlIndex]) {
+            this.getDuration = () => {
+                this.expect(/[\dl^.~]/);
+                this.extensions = this.defaultExtensions;
+                let changeDefaultDuration = false;
+                while (this.isThisValid(/[\dl^.~]/)) {
+                    switch (this.mml[this.mmlIndex]) {
                         case 'l':
                             changeDefaultDuration = true;
-                            _this.extensions = _this.readNextLength();
+                            this.extensions = this.readNextLength();
                             break;
                         case '^':
-                            _this.extensions = _this.extensions.concat(_this.readNextLength());
+                            this.extensions = this.extensions.concat(this.readNextLength());
                             break;
                         case '.':
                             do {
-                                var extension = _this.extensions[_this.extensions.length - 1] * 2;
-                                _this.extensions.push(extension);
-                            } while (_this.isNextValid(/\./));
+                                let extension = this.extensions[this.extensions.length - 1] * 2;
+                                this.extensions.push(extension);
+                            } while (this.isNextValid(/\./));
                             break;
                         case '~':
-                            _this.extensions = (_a = _this.extensions).concat.apply(_a, new Array(_this.readNextLength()[0]).fill(_this.extensions[0]));
+                            this.extensions = this.extensions.concat(...new Array(this.readNextLength()[0]).fill(this.extensions[0]));
                             break;
                         default: {
-                            _this.extensions = _this.readNextLength();
+                            this.extensions = this.readNextLength();
                             break;
                         }
                     }
                 }
                 if (changeDefaultDuration) {
-                    _this.defaultExtensions = _this.extensions;
-                    _this.notesInQueue.push({
+                    this.defaultExtensions = this.extensions;
+                    this.notesInQueue.push({
                         type: "default-duration",
-                        extensions: _this.defaultExtensions
+                        extensions: this.defaultExtensions
                     });
                 }
             };
-            this.saveNote = function (noteIndex) {
-                _this.notesInQueue.push({
+            this.saveNote = (noteIndex) => {
+                this.notesInQueue.push({
                     type: 'note',
                     index: noteIndex,
-                    extensions: _this.extensions,
+                    extensions: this.extensions,
                 });
             };
-            this.nextNote = function () {
-                _this.extensions = _this.defaultExtensions;
+            this.nextNote = () => {
+                this.extensions = this.defaultExtensions;
             };
-            this.getNote = function () {
-                _this.expect(/[cdefgab]/);
-                var noteIndex = C_BASE_NOTE_INDEXES[_this.mml[_this.mmlIndex]] + C_BASE_KEY_INDEX + _this.getOctaveOffset();
-                if (_this.isNextValid(/[-+#\d^.]/)) {
-                    switch (_this.mml[_this.mmlIndex]) {
+            this.getNote = () => {
+                this.expect(/[cdefgab]/);
+                let noteIndex = C_BASE_NOTE_INDEXES[this.mml[this.mmlIndex]] + C_BASE_KEY_INDEX + this.getOctaveOffset();
+                if (this.isNextValid(/[-+#\d^.]/)) {
+                    switch (this.mml[this.mmlIndex]) {
                         case '-':
                             noteIndex--;
                             break;
@@ -279,125 +267,125 @@ export var MML;
                             noteIndex++;
                             break;
                         default:
-                            if (_this.readingChord) {
+                            if (this.readingChord) {
                                 break;
                             }
-                            _this.getDuration();
+                            this.getDuration();
                             break;
                     }
                 }
-                if (_this.readingChord) {
-                    _this.chordNoteIndexes.push(noteIndex);
+                if (this.readingChord) {
+                    this.chordNoteIndexes.push(noteIndex);
                     return;
                 }
-                _this.saveNote(noteIndex);
+                this.saveNote(noteIndex);
             };
-            this.getOctave = function () {
-                _this.expect(/o/);
-                if (_this.isNextValid(/\d/)) {
-                    _this.octave = parseInt(_this.mml[_this.mmlIndex]);
-                    _this.notesInQueue.push({ type: "octave", octave: _this.octave });
+            this.getOctave = () => {
+                this.expect(/o/);
+                if (this.isNextValid(/\d/)) {
+                    this.octave = parseInt(this.mml[this.mmlIndex]);
+                    this.notesInQueue.push({ type: "octave", octave: this.octave });
                 }
             };
-            this.decreaseOctave = function () {
-                _this.expect(/>/);
-                if (_this.isNextValid(/\d/)) {
-                    _this.octave -= parseInt(_this.mml[_this.mmlIndex]);
+            this.decreaseOctave = () => {
+                this.expect(/>/);
+                if (this.isNextValid(/\d/)) {
+                    this.octave -= parseInt(this.mml[this.mmlIndex]);
                 }
                 else {
-                    _this.octave--;
+                    this.octave--;
                 }
-                _this.notesInQueue.push({ type: "octave", octave: _this.octave });
+                this.notesInQueue.push({ type: "octave", octave: this.octave });
             };
-            this.increaseOctave = function () {
-                _this.expect(/</);
-                if (_this.isNextValid(/\d/)) {
-                    _this.octave += parseInt(_this.mml[_this.mmlIndex]);
+            this.increaseOctave = () => {
+                this.expect(/</);
+                if (this.isNextValid(/\d/)) {
+                    this.octave += parseInt(this.mml[this.mmlIndex]);
                 }
                 else {
-                    _this.octave++;
+                    this.octave++;
                 }
-                _this.notesInQueue.push({ type: "octave", octave: _this.octave });
+                this.notesInQueue.push({ type: "octave", octave: this.octave });
             };
-            this.getTempo = function () {
-                _this.expect(/t/);
-                var newTempo = 0;
-                while (_this.isNextValid(/\d/)) {
-                    newTempo = newTempo * 10 + parseInt(_this.mml[_this.mmlIndex]);
+            this.getTempo = () => {
+                this.expect(/t/);
+                let newTempo = 0;
+                while (this.isNextValid(/\d/)) {
+                    newTempo = newTempo * 10 + parseInt(this.mml[this.mmlIndex]);
                 }
-                _this.tempo = newTempo;
-                _this.notesInQueue.push({ type: "tempo", tempo: _this.tempo });
+                this.tempo = newTempo;
+                this.notesInQueue.push({ type: "tempo", tempo: this.tempo });
             };
-            this.getRest = function () {
-                _this.expect(/r/);
-                if (_this.isNextValid(/[\d^.]/)) {
-                    _this.getDuration();
+            this.getRest = () => {
+                this.expect(/r/);
+                if (this.isNextValid(/[\d^.]/)) {
+                    this.getDuration();
                 }
-                _this.notesInQueue.push({
+                this.notesInQueue.push({
                     type: 'rest',
-                    extensions: _this.extensions,
+                    extensions: this.extensions,
                 });
             };
-            this.getChord = function () {
-                _this.expect(/\[/);
-                _this.readingChord = true;
-                _this.chordNoteIndexes = [];
-                _this.notesInQueue.push({ type: 'start-chord' });
+            this.getChord = () => {
+                this.expect(/\[/);
+                this.readingChord = true;
+                this.chordNoteIndexes = [];
+                this.notesInQueue.push({ type: 'start-chord' });
             };
-            this.playChord = function () {
-                _this.expect(/]/);
-                if (_this.isNextValid(/[\d^.]/)) {
-                    _this.getDuration();
+            this.playChord = () => {
+                this.expect(/]/);
+                if (this.isNextValid(/[\d^.]/)) {
+                    this.getDuration();
                 }
-                _this.chordNoteIndexes.map(function (noteIndex) {
-                    _this.saveNote(noteIndex);
+                this.chordNoteIndexes.map(noteIndex => {
+                    this.saveNote(noteIndex);
                 });
-                _this.readingChord = false;
-                _this.chordNoteIndexes = [];
-                _this.notesInQueue.push({
+                this.readingChord = false;
+                this.chordNoteIndexes = [];
+                this.notesInQueue.push({
                     type: 'end-chord',
-                    extensions: _this.extensions,
+                    extensions: this.extensions,
                 });
             };
-            this.setInfiniteLoop = function () {
-                _this.expect(/$/);
-                _this.mmlIndex++;
-                _this.notesInQueue.push({ type: 'infinite-loop' });
+            this.setInfiniteLoop = () => {
+                this.expect(/$/);
+                this.mmlIndex++;
+                this.notesInQueue.push({ type: 'infinite-loop' });
             };
-            this.startLoop = function () {
-                _this.expect(/\//);
-                _this.mmlIndex++;
-                _this.expect(/:/);
-                _this.mmlIndex++;
-                _this.notesInQueue.push({ type: 'start-loop' });
+            this.startLoop = () => {
+                this.expect(/\//);
+                this.mmlIndex++;
+                this.expect(/:/);
+                this.mmlIndex++;
+                this.notesInQueue.push({ type: 'start-loop' });
             };
-            this.endLoop = function () {
-                _this.expect(/:/);
-                _this.mmlIndex++;
-                _this.expect(/\//);
-                var loopTimes = 0;
-                while (_this.isNextValid(/\d/)) {
-                    loopTimes = loopTimes * 10 + parseInt(_this.mml[_this.mmlIndex]);
+            this.endLoop = () => {
+                this.expect(/:/);
+                this.mmlIndex++;
+                this.expect(/\//);
+                let loopTimes = 0;
+                while (this.isNextValid(/\d/)) {
+                    loopTimes = loopTimes * 10 + parseInt(this.mml[this.mmlIndex]);
                 }
                 if (loopTimes === 0) {
                     loopTimes = 2;
                 }
-                _this.notesInQueue.push({ type: 'end-loop', times: loopTimes });
+                this.notesInQueue.push({ type: 'end-loop', times: loopTimes });
             };
-            this.breakLoop = function () {
-                _this.expect(/\|/);
-                _this.notesInQueue.push({ type: 'break-loop' });
+            this.breakLoop = () => {
+                this.expect(/\|/);
+                this.notesInQueue.push({ type: 'break-loop' });
             };
-            this.setHeader = function () {
-                _this.expect(/%/);
-                _this.notesInQueue.push({ type: 'header' });
-                _this.isHeader = true;
+            this.setHeader = () => {
+                this.expect(/%/);
+                this.notesInQueue.push({ type: 'header' });
+                this.isHeader = true;
             };
-            this.parseMML = function () {
-                while (_this.mmlIndex < _this.mml.length) {
-                    var prevMMLIndex = _this.mmlIndex;
-                    _this.nextNote();
-                    switch (_this.mml[_this.mmlIndex]) {
+            this.parseMML = () => {
+                while (this.mmlIndex < this.mml.length) {
+                    const prevMMLIndex = this.mmlIndex;
+                    this.nextNote();
+                    switch (this.mml[this.mmlIndex]) {
                         case 'c':
                         case 'd':
                         case 'e':
@@ -405,165 +393,165 @@ export var MML;
                         case 'g':
                         case 'a':
                         case 'b':
-                            _this.getNote();
+                            this.getNote();
                             break;
                         case '[':
-                            _this.getChord();
+                            this.getChord();
                             break;
                         case ']':
-                            _this.playChord();
+                            this.playChord();
                             break;
                         case 'r':
-                            _this.getRest();
+                            this.getRest();
                             break;
                         case 'l':
-                            _this.getDuration();
+                            this.getDuration();
                             break;
                         case 'o':
-                            _this.getOctave();
+                            this.getOctave();
                             break;
                         case '>':
-                            _this.decreaseOctave();
+                            this.decreaseOctave();
                             break;
                         case '<':
-                            _this.increaseOctave();
+                            this.increaseOctave();
                             break;
                         case 't':
-                            _this.getTempo();
+                            this.getTempo();
                             break;
                         case '$':
-                            _this.setInfiniteLoop();
+                            this.setInfiniteLoop();
                             break;
                         case '/':
-                            _this.startLoop();
+                            this.startLoop();
                             break;
                         case ':':
-                            _this.endLoop();
+                            this.endLoop();
                             break;
                         case '|':
-                            _this.breakLoop();
+                            this.breakLoop();
                             break;
                         case '%':
-                            _this.setHeader();
+                            this.setHeader();
                             break;
                         default:
-                            _this.goToNext = true;
+                            this.goToNext = true;
                             break;
                     }
-                    if (_this.goToNext || prevMMLIndex === _this.mmlIndex) {
-                        _this.mmlIndex++;
-                        _this.goToNext = false;
+                    if (this.goToNext || prevMMLIndex === this.mmlIndex) {
+                        this.mmlIndex++;
+                        this.goToNext = false;
                     }
                 }
             };
-            this.playMML = function (relativeStartTime, relativeScheduleTime) {
-                while (_this.playState.nextNoteTime < relativeScheduleTime
-                    && (_this.isHeader || !header || _this.playState.nextNoteTime < header.playState.nextNoteTime)
-                    && _this.playState.index < _this.notesInQueue.length) {
-                    if (!_this.isHeader && header) {
-                        _this.playState.tempo = header.tempo;
-                        if (header.playState.startLoopIndex >= 0 && _this.playState.startLoopIndex < 0) {
-                            _this.playState.startLoopIndex = _this.playState.index;
-                            _this.playState.startLoopOffset = header.playState.loopNoteTime - _this.playState.nextNoteTime;
-                            if (_this.playState.startLoopOffset < 0)
-                                _this.playState.startLoopOffset = 0;
+            this.playMML = (relativeStartTime, relativeScheduleTime) => {
+                while (this.playState.nextNoteTime < relativeScheduleTime
+                    && (this.isHeader || !header || this.playState.nextNoteTime < header.playState.nextNoteTime)
+                    && this.playState.index < this.notesInQueue.length) {
+                    if (!this.isHeader && header) {
+                        this.playState.tempo = header.tempo;
+                        if (header.playState.startLoopIndex >= 0 && this.playState.startLoopIndex < 0) {
+                            this.playState.startLoopIndex = this.playState.index;
+                            this.playState.startLoopOffset = header.playState.loopNoteTime - this.playState.nextNoteTime;
+                            if (this.playState.startLoopOffset < 0)
+                                this.playState.startLoopOffset = 0;
                         }
-                        else if (header.playState.endLoopIndex >= 0 && _this.playState.endLoopIndex < 0) {
-                            _this.playState.endLoopIndex = _this.playState.index;
-                            _this.playState.endLoopOffset = header.playState.loopNoteTime - _this.playState.nextNoteTime;
-                            if (_this.playState.endLoopOffset < 0)
-                                _this.playState.endLoopOffset = 0;
-                            _this.playState.loopCount = header.playState.loopCount;
-                            _this.playState.index = _this.playState.startLoopIndex;
-                            _this.playState.nextNoteTime += _this.playState.startLoopOffset;
+                        else if (header.playState.endLoopIndex >= 0 && this.playState.endLoopIndex < 0) {
+                            this.playState.endLoopIndex = this.playState.index;
+                            this.playState.endLoopOffset = header.playState.loopNoteTime - this.playState.nextNoteTime;
+                            if (this.playState.endLoopOffset < 0)
+                                this.playState.endLoopOffset = 0;
+                            this.playState.loopCount = header.playState.loopCount;
+                            this.playState.index = this.playState.startLoopIndex;
+                            this.playState.nextNoteTime += this.playState.startLoopOffset;
                         }
-                        else if (header.playState.loopCount !== _this.playState.loopCount) {
+                        else if (header.playState.loopCount !== this.playState.loopCount) {
                             if (header.playState.loopCount < 0) {
-                                _this.playState.index = _this.playState.endLoopIndex;
-                                _this.playState.nextNoteTime += _this.playState.endLoopOffset;
-                                _this.playState.loopCount = -1;
-                                _this.playState.startLoopIndex = -1;
-                                _this.playState.endLoopIndex = -1;
+                                this.playState.index = this.playState.endLoopIndex;
+                                this.playState.nextNoteTime += this.playState.endLoopOffset;
+                                this.playState.loopCount = -1;
+                                this.playState.startLoopIndex = -1;
+                                this.playState.endLoopIndex = -1;
                             }
                             else {
-                                _this.playState.index = _this.playState.startLoopIndex;
-                                _this.playState.nextNoteTime += _this.playState.startLoopOffset;
-                                _this.playState.loopCount = header.playState.loopCount;
+                                this.playState.index = this.playState.startLoopIndex;
+                                this.playState.nextNoteTime += this.playState.startLoopOffset;
+                                this.playState.loopCount = header.playState.loopCount;
                             }
                         }
                     }
-                    var prevPlayState = _this.playState;
-                    _this.playState = __assign({}, _this.playState);
-                    var note = _this.notesInQueue[_this.playState.index];
+                    let prevPlayState = this.playState;
+                    this.playState = Object.assign({}, this.playState);
+                    const note = this.notesInQueue[this.playState.index];
                     switch (note.type) {
                         case 'start-loop':
-                            _this.playState.startLoopIndex = _this.playState.index;
-                            _this.playState.loopNoteTime = _this.playState.nextNoteTime;
+                            this.playState.startLoopIndex = this.playState.index;
+                            this.playState.loopNoteTime = this.playState.nextNoteTime;
                             break;
                         case 'end-loop':
-                            if (_this.playState.loopCount < 0) {
-                                _this.playState.endLoopIndex = _this.playState.index;
-                                _this.playState.loopCount = note.times;
-                                _this.playState.loopNoteTime = _this.playState.nextNoteTime;
+                            if (this.playState.loopCount < 0) {
+                                this.playState.endLoopIndex = this.playState.index;
+                                this.playState.loopCount = note.times;
+                                this.playState.loopNoteTime = this.playState.nextNoteTime;
                             }
-                            _this.playState.loopCount--;
-                            if (_this.playState.loopCount > 0) {
-                                _this.playState.index = _this.playState.startLoopIndex;
+                            this.playState.loopCount--;
+                            if (this.playState.loopCount > 0) {
+                                this.playState.index = this.playState.startLoopIndex;
                             }
                             else {
-                                _this.playState.loopCount = -1;
-                                _this.playState.startLoopIndex = -1;
-                                _this.playState.endLoopIndex = -1;
+                                this.playState.loopCount = -1;
+                                this.playState.startLoopIndex = -1;
+                                this.playState.endLoopIndex = -1;
                             }
                             break;
                         case 'break-loop':
-                            if (_this.playState.loopCount === 1) {
-                                _this.playState.index = _this.playState.endLoopIndex;
-                                _this.playState.loopCount = -1;
-                                _this.playState.startLoopIndex = -1;
-                                _this.playState.endLoopIndex = -1;
+                            if (this.playState.loopCount === 1) {
+                                this.playState.index = this.playState.endLoopIndex;
+                                this.playState.loopCount = -1;
+                                this.playState.startLoopIndex = -1;
+                                this.playState.endLoopIndex = -1;
                             }
                             break;
                         case 'infinite-loop':
-                            _this.playState.infiniteLoopIndex = _this.playState.index;
+                            this.playState.infiniteLoopIndex = this.playState.index;
                             break;
                         case 'tempo':
-                            _this.playState.tempo = note.tempo;
+                            this.playState.tempo = note.tempo;
                             break;
                         case 'start-chord':
-                            _this.playState.chord = true;
+                            this.playState.chord = true;
                             break;
                         case 'end-chord':
-                            _this.playState.chord = false;
-                            _this.playState.nextNoteTime += MML.convertDurationToSeconds(note, _this.playState.tempo);
+                            this.playState.chord = false;
+                            this.playState.nextNoteTime += MML.convertDurationToSeconds(note, this.playState.tempo);
                             break;
                         case 'rest':
-                            _this.playState.nextNoteTime += MML.convertDurationToSeconds(note, _this.playState.tempo);
+                            this.playState.nextNoteTime += MML.convertDurationToSeconds(note, this.playState.tempo);
                             break;
                         case 'note':
-                            MML.playNote(note, _this.playState.tempo, relativeStartTime + _this.playState.nextNoteTime);
-                            if (_this.playState.chord)
+                            MML.playNote(note, this.playState.tempo, relativeStartTime + this.playState.nextNoteTime);
+                            if (this.playState.chord)
                                 break;
-                            _this.playState.nextNoteTime += MML.convertDurationToSeconds(note, _this.playState.tempo);
+                            this.playState.nextNoteTime += MML.convertDurationToSeconds(note, this.playState.tempo);
                             break;
                     }
-                    if (_this.playState.infiniteLoopIndex >= 0 && _this.playState.index >= _this.notesInQueue.length - 1) {
-                        _this.playState.index = _this.playState.infiniteLoopIndex;
+                    if (this.playState.infiniteLoopIndex >= 0 && this.playState.index >= this.notesInQueue.length - 1) {
+                        this.playState.index = this.playState.infiniteLoopIndex;
                     }
-                    _this.playState.index++;
-                    if (_this.isHeader && prevPlayState.nextNoteTime !== _this.playState.nextNoteTime)
+                    this.playState.index++;
+                    if (this.isHeader && prevPlayState.nextNoteTime !== this.playState.nextNoteTime)
                         break;
                 }
             };
-            this.stringifyNoteKey = function (note) {
+            this.stringifyNoteKey = (note) => {
                 return notes[note.index].key;
             };
-            this.stringifyNoteDuration = function (note, defaultExtension) {
-                var mmlDuration = "";
-                var prevExtension = note.extensions[0];
-                var occurrences = 1;
+            this.stringifyNoteDuration = (note, defaultExtension) => {
+                let mmlDuration = "";
+                let prevExtension = note.extensions[0];
+                let occurrences = 1;
                 mmlDuration += note.extensions.join('') === defaultExtension.join('') ? "" : prevExtension;
-                note.extensions.slice(1).map(function (extension) {
+                note.extensions.slice(1).map((extension) => {
                     if (prevExtension === extension) {
                         if (occurrences === 1) {
                             mmlDuration += '~';
@@ -588,10 +576,10 @@ export var MML;
                     mmlDuration += occurrences;
                 return mmlDuration;
             };
-            this.writeToMML = function () {
-                var mmlText = "";
-                var defaultExtensions = [QUARTER_NOTE];
-                _this.notesInQueue.map(function (note) {
+            this.writeToMML = () => {
+                let mmlText = "";
+                let defaultExtensions = [QUARTER_NOTE];
+                this.notesInQueue.map(note => {
                     switch (note.type) {
                         case "infinite-loop":
                             mmlText += "$";
@@ -603,7 +591,7 @@ export var MML;
                             mmlText += "t" + note.tempo;
                             break;
                         case "default-duration":
-                            mmlText += "l" + _this.stringifyNoteDuration(note, []);
+                            mmlText += "l" + this.stringifyNoteDuration(note, []);
                             defaultExtensions = note.extensions;
                             break;
                         case "start-loop":
@@ -622,13 +610,13 @@ export var MML;
                             mmlText += "[";
                             break;
                         case "end-chord":
-                            mmlText += "]" + _this.stringifyNoteDuration(note, defaultExtensions);
+                            mmlText += "]" + this.stringifyNoteDuration(note, defaultExtensions);
                             break;
                         case "rest":
-                            mmlText += "r" + _this.stringifyNoteDuration(note, defaultExtensions);
+                            mmlText += "r" + this.stringifyNoteDuration(note, defaultExtensions);
                             break;
                         case "note":
-                            mmlText += _this.stringifyNoteKey(note) + _this.stringifyNoteDuration(note, defaultExtensions);
+                            mmlText += this.stringifyNoteKey(note) + this.stringifyNoteDuration(note, defaultExtensions);
                             break;
                     }
                 });
@@ -643,10 +631,9 @@ export var MML;
             }
             this.resetPlayState();
         }
-        Sequence.calculateDurationFromNewExtension = function (duration, extension) {
-            return (duration * extension) / (duration + extension);
-        };
-        return Sequence;
-    }());
+    }
+    Sequence.calculateDurationFromNewExtension = (duration, extension) => {
+        return (duration * extension) / (duration + extension);
+    };
     MML.Sequence = Sequence;
 })(MML || (MML = {}));

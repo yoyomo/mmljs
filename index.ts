@@ -219,7 +219,7 @@ export module MML {
 
   export const play = () => {
     stop();
-    playInterval = global.setInterval(playMML, lookahead);
+    playInterval = window.setInterval(playMML, lookahead);
   };
 
   export const getDurationFromExtensions = (note: TimedSequenceNote): number => {
