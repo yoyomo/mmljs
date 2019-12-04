@@ -8,6 +8,8 @@ export const A_BASE_FREQUENCY = 440;
 export const QUARTER_NOTE = 4;
 export const BASE_OCTAVE = 4;
 
+export type NoteLetters = 'a'|'b'|'c'|'d'|'e'|'f'|'g';
+
 export interface Note {
   type: 'note',
   index: number,
@@ -112,11 +114,11 @@ export module MML {
   let header: Sequence | void;
 
   export const initialize = () => {
-    const AudioContext = window['AudioContext'] // Default
-        || window['webkitAudioContext'] // Safari and old versions of Chrome
-        || window['mozAudioContext']
-        || window['oAudioContext']
-        || window['msAudioContext']
+    const AudioContext = (window as any)['AudioContext'] // Default
+        || (window as any)['webkitAudioContext'] // Safari and old versions of Chrome
+        || (window as any)['mozAudioContext']
+        || (window as any)['oAudioContext']
+        || (window as any)['msAudioContext']
         || false;
 
     audioContext = new AudioContext();
@@ -206,7 +208,7 @@ export module MML {
   export const stop = () => {
     clearInterval(playInterval);
     gain.disconnect(audioContext.destination);
-    startTime = null;
+    startTime = -1;
     header && header.resetPlayState();
     sequences.map(sequence => {
       sequence.resetPlayState();
@@ -221,7 +223,7 @@ export module MML {
   };
 
   export const getDurationFromExtensions = (note: TimedSequenceNote): number => {
-    if(!note.extensions) return;
+    if(!note.extensions) return -1;
     let duration = note.extensions[0];
     note.extensions.slice(1).map(extension => {
       duration = MML.Sequence.calculateDurationFromNewExtension(duration, extension);
@@ -283,10 +285,10 @@ export module MML {
 
     tempo = 120;
     octave = BASE_OCTAVE;
-    extensions = [QUARTER_NOTE];
+    extensions: number[] = [QUARTER_NOTE];
     defaultExtensions = [QUARTER_NOTE];
 
-    chordNoteIndexes = [];
+    chordNoteIndexes: number[] = [];
     readingChord = false;
 
     mmlIndex = 0;
@@ -296,7 +298,7 @@ export module MML {
     isHeader = false;
 
     notesInQueue: SequenceNote[] = [];
-    playState: PlayState;
+    playState = {} as PlayState;
 
     constructor(mml: string) {
       this.mml = mml;
@@ -333,7 +335,7 @@ export module MML {
     };
 
     isThisValid = (reg: RegExp) => {
-      return this.goToNext = this.mml[this.mmlIndex] && this.mml[this.mmlIndex].trim() && reg.test(this.mml[this.mmlIndex]);
+      return this.goToNext = !!this.mml[this.mmlIndex] && !!this.mml[this.mmlIndex].trim() && reg.test(this.mml[this.mmlIndex]);
     };
 
     isNextValid = (reg: RegExp) => {
@@ -349,14 +351,14 @@ export module MML {
       return (duration * extension) / (duration + extension);
     };
 
-    readNextLength = () => {
+    readNextLength = (): number[] => {
       let length = 0;
       do {
         if (this.isThisValid(/\d/)) {
           length = length * 10 + parseInt(this.mml[this.mmlIndex]);
         }
       } while (this.isNextValid(/\d/));
-      return [].concat(length === 0 ? this.defaultExtensions : length);
+      return length !== 0 ? [length] : this.defaultExtensions;
     };
 
     getDuration = () => {
@@ -413,7 +415,7 @@ export module MML {
 
     getNote = () => {
       this.expect(/[cdefgab]/);
-      let noteIndex = C_BASE_NOTE_INDEXES[this.mml[this.mmlIndex]] + C_BASE_KEY_INDEX + this.getOctaveOffset();
+      let noteIndex = C_BASE_NOTE_INDEXES[this.mml[this.mmlIndex] as NoteLetters ] + C_BASE_KEY_INDEX + this.getOctaveOffset();
 
       if (this.isNextValid(/[-+#\d^.]/)) {
         switch (this.mml[this.mmlIndex]) {

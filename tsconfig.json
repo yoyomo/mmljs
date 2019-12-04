@@ -1,12 +1,21 @@
 {
   "compilerOptions": {
-    "declaration": true,
-    "moduleResolution": "node",
-    "target": "es5",
+    "alwaysStrict": true,
+    "strict": true,
     "module": "es6",
+    "target": "es6",
+    "noImplicitAny": true,
+    "strictNullChecks": true,
+    "noUnusedLocals": false,
+    "noUnusedParameters": true,
+    "noImplicitReturns": true,
+    "moduleResolution": "node",
+    "esModuleInterop": true,
     "lib": [
       "es2019",
       "dom"
-    ]
+    ],
+    "noEmit": false,
+    "declaration": true
   }
 }
