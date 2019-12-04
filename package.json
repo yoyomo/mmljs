@@ -1,0 +1,26 @@
+{
+  "name": "mmljs",
+  "version": "1.0.0",
+  "description": "MML reader, parser, writer, and player",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/yoyomo/mmljs.git"
+  },
+  "keywords": [
+    "mml",
+    "js"
+  ],
+  "author": "Armando J. Ortiz",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/yoyomo/mmljs/issues"
+  },
+  "homepage": "https://github.com/yoyomo/mmljs#readme",
+  "devDependencies": {
+    "typescript": "^3.7.3"
+  }
+}

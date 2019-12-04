@@ -1,0 +1,12 @@
+{
+  "compilerOptions": {
+    "declaration": true,
+    "moduleResolution": "node",
+    "target": "es5",
+    "module": "es6",
+    "lib": [
+      "es2019",
+      "dom"
+    ]
+  }
+}
