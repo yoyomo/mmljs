@@ -30,6 +30,7 @@ export var MML;
         gain = audioContext.createGain();
         filter.type = "lowpass";
         filter.frequency.setValueAtTime(700, 0);
+        gain.gain.setValueAtTime(0.2, 0);
         filter.connect(gain);
         // gain.gain.setValueAtTime(0.5, 0);
         gain.connect(audioContext.destination);
@@ -94,7 +95,7 @@ export var MML;
     MML.stop = () => {
         clearInterval(playInterval);
         gain.disconnect(audioContext.destination);
-        startTime = -1;
+        startTime = 0;
         header && header.resetPlayState();
         sequences.map(sequence => {
             sequence.resetPlayState();
@@ -107,7 +108,7 @@ export var MML;
     };
     MML.getDurationFromExtensions = (note) => {
         if (!note.extensions)
-            return -1;
+            return 0;
         let duration = note.extensions[0];
         note.extensions.slice(1).map(extension => {
             duration = MML.Sequence.calculateDurationFromNewExtension(duration, extension);

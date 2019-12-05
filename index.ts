@@ -127,6 +127,7 @@ export module MML {
 
     filter.type = "lowpass";
     filter.frequency.setValueAtTime(700,0);
+    gain.gain.setValueAtTime(0.2, 0);
     filter.connect(gain);
 
     // gain.gain.setValueAtTime(0.5, 0);
@@ -208,7 +209,7 @@ export module MML {
   export const stop = () => {
     clearInterval(playInterval);
     gain.disconnect(audioContext.destination);
-    startTime = -1;
+    startTime = 0;
     header && header.resetPlayState();
     sequences.map(sequence => {
       sequence.resetPlayState();
@@ -223,7 +224,7 @@ export module MML {
   };
 
   export const getDurationFromExtensions = (note: TimedSequenceNote): number => {
-    if(!note.extensions) return -1;
+    if(!note.extensions) return 0;
     let duration = note.extensions[0];
     note.extensions.slice(1).map(extension => {
       duration = MML.Sequence.calculateDurationFromNewExtension(duration, extension);
